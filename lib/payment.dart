@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:authentication/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -57,7 +58,7 @@ class _TicketBookingScreenState extends State<TicketBookingScreen> {
       context,
       '/ticket',
       arguments: TicketScreenArguments(
-        source: 'Source', // Replace with actual source
+        source: '$bS', // Replace with actual source
         destination: 'Destination', // Replace with actual destination
         paymentId: response.paymentId,
         orderId: response.orderId,
@@ -143,7 +144,7 @@ class BusTicketBookingScreen extends StatelessWidget {
               ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Source',
+                  hintText: '$bS',
                   border: InputBorder.none,
                   icon: Icon(Icons.location_on),
                 ),
@@ -158,7 +159,7 @@ class BusTicketBookingScreen extends StatelessWidget {
               ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Destination',
+                  hintText: '$bS1',
                   border: InputBorder.none,
                   icon: Icon(Icons.location_on),
                 ),
@@ -196,7 +197,7 @@ class TrainTicketBookingScreen extends StatelessWidget {
               ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Source',
+                  hintText: '$tS',
                   border: InputBorder.none,
                   icon: Icon(Icons.location_on),
                 ),
@@ -211,7 +212,7 @@ class TrainTicketBookingScreen extends StatelessWidget {
               ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Destination',
+                  hintText: '$tS1',
                   border: InputBorder.none,
                   icon: Icon(Icons.location_on),
                 ),

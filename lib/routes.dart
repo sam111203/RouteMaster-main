@@ -37,6 +37,9 @@ class _RouteDisplayState extends State<RouteDisplay> {
      getSuggestion(bS!);
     else if(selectedIndex!=0&&selectedIndex==2)
       getSuggestion(tS!);
+    else if(selectedIndex!=0&&selectedIndex==3)
+      getSuggestion(firststop!);
+
 
   }
   void getSuggestion(String input) async {
@@ -89,7 +92,7 @@ class _RouteDisplayState extends State<RouteDisplay> {
   Future<void> _getPolylineCoordinates(LatLng origin, LatLng destination) async {
     String apiKey = 'AIzaSyDm-MaPLtStPAEPLi-nQ2_DAgh24BRGH14'; // Replace with your actual API key
     String url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey';
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey&mode=driving';
 
     final response = await http.get(Uri.parse(url));
 
@@ -222,12 +225,32 @@ class _RouteDisplayState extends State<RouteDisplay> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
+                  if(selectedIndex==3){
+                    //print("Not available!");
+                    showDialog(context: context, builder: (context)=>AlertDialog(
+                      title: Text('Future Update!',style: TextStyle(fontWeight: FontWeight.bold),),
+                      actions: <Widget>[
+                        Text("Payments for transit mode are currently not available in current version of app!"),
+                        ElevatedButton(onPressed: (){
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (BuildContext context) =>Transit1(),
+                            ),
+                          );
+                          }, child: Text('ok')),
+                      ],
+                    ));
+                  }
+                  else{
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (BuildContext context) => TicketingApp(),
                     ),
                   );
+                  }
                 },
                 child: Text("Confirm Route"),
               ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'prehomepage.dart';
 import 'package:authentication/test.dart';
@@ -50,12 +51,39 @@ class _MyHomePageState extends State<MyHomePage> {
     String apiKey =
         'AIzaSyDm-MaPLtStPAEPLi-nQ2_DAgh24BRGH14'; // Replace with your actual API key
     String url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey';
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey&mode=driving';
 
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
+      print(decoded);
+      Map<String, dynamic> decodedResponse = json.decode(response.body);
+      if (decodedResponse['status'] == 'OK') {
+        // Extracting route details
+        List<dynamic> routes = decodedResponse['routes'];
+        if (routes.isNotEmpty) {
+          Map<String, dynamic> route = routes[0];
+          // Extracting distance
+          Map<String, dynamic> distance = route['legs'][0]['distance'];
+          String distanceText = distance['text'];
+          // Extracting duration
+          Map<String, dynamic> duration = route['legs'][0]['duration'];
+          String durationText = duration['text'];
+
+          showDialog(
+              context: context,
+              builder: (context)=>AlertDialog(
+               title: Text('Route Details!'),
+               actions: [
+                 Center(child:Text('Distance: $distanceText',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20),)),
+                 Center(child:Text('Duration: $durationText',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20),)),
+                 Padding(padding: EdgeInsets.only(left: 50),child:ElevatedButton(onPressed: (){Navigator.pop(context);}, child: Text("Got it!")))
+               ],
+             )
+            );
+        }
+      }
       List<LatLng> polylineCoordinates = [];
 
       if (decoded['status'] == 'OK') {

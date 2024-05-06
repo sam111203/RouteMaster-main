@@ -9,9 +9,18 @@ int selectedIndex = 0;
 String apiKey1 = 'AIzaSyDm-MaPLtStPAEPLi-nQ2_DAgh24BRGH14';
 String radius = "1000"; //in metre
 List<dynamic> busStations = [];
+List<dynamic> busStations1 = [];
+String joinedPairs='';
+String pair='';
+String firststop='';
+String laststop='';
 List<dynamic> trainStations = [];
+List<dynamic> trainStations1 = [];
+List<String> pairs = [];
 String tS = '';
+String tS1 = '';
 String bS = '';
+String bS1 = '';
 String transitOptionsDescription = '';
 
 class Transit1 extends StatefulWidget {
@@ -36,6 +45,7 @@ class _Transit1State extends State<Transit1> {
       getTransitOptions();
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -79,10 +89,10 @@ class _Transit1State extends State<Transit1> {
                 color: Colors.blue[50],
                 child: ListTile(
                   leading: const Icon(Icons.directions_bus_sharp),
-                  title: Text(
+                  title: Text('Nearest Bus Stop:', style: TextStyle(fontStyle: FontStyle.italic),),
+                  subtitle: Text(
                     '$bS',
                   ),
-                  subtitle: Text('Bus Number:', style: TextStyle(fontStyle: FontStyle.italic),),
                   selected: true,
                   onTap: () {
 
@@ -97,10 +107,10 @@ class _Transit1State extends State<Transit1> {
                   color: Colors.blue[50],
                   child: ListTile(
                     leading: const Icon(Icons.train_outlined),
-                    title: Text(
+                    title: Text('Nearest Train Station:'),
+                    subtitle: Text(
                       '$tS',
                     ),
-                    subtitle: Text('Get down at _____' + ' station'),
                     selected: true,
                     onTap: () {
 
@@ -118,7 +128,8 @@ class _Transit1State extends State<Transit1> {
                     title: const Text(
                       'Transit',
                     ),
-                    subtitle: const Text('A >>>>> B && B >>>>> C'),
+
+                    subtitle: Text('${destinationStops.asMap().entries.map((entry) => '${entry.value} >>>>> ${arrivalStops[entry.key]}').join(', ')}'),
                     selected: true,
                     onTap: () {
 
@@ -147,9 +158,12 @@ class _Transit1State extends State<Transit1> {
       ),
     );
   }
+
   void getNearbyTrainStations() async{
-    var url = Uri.parse('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$sourcelat,$sourcelong&radius=2000&type=train_station&key=$apiKey1');
+    var url = Uri.parse('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$sourcelat,$sourcelong&radius=4000&type=train_station&key=$apiKey1');
+    var url1 = Uri.parse('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$destinationlat,$destinationlong&radius=4000&type=train_station&key=$apiKey1');
     var response = await http.post(url);
+    var response1= await http.post(url1);
     if (response.statusCode == 200) {
       trainStations = jsonDecode(response.body.toString())['results'];
       setState(() {
@@ -157,13 +171,25 @@ class _Transit1State extends State<Transit1> {
         // print(tS);
       });
     } else {
-      tS= 'No nearby Train Stations';
+      tS= 'No nearby Train Stations to source';
       print('Failed to get nearest train station: ${response.statusCode}');
+    }
+    if (response1.statusCode == 200) {
+      trainStations1 = jsonDecode(response1.body.toString())['results'];
+      setState(() {
+        tS1 = trainStations1[0] ['name'];
+        print(tS1);
+      });
+    } else {
+      tS1= 'No nearby Train Stations to destination';
+      print('Failed to get nearest train station: ${response1.statusCode}');
     }
   }
   void getNearbyBusStations() async{
     var url = Uri.parse('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$sourcelat,$sourcelong&radius=2000&type=bus_station&key=$apiKey1');
+    var url2 = Uri.parse('https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$destinationlat,$destinationlong&radius=2000&type=bus_station&key=$apiKey1');
     var response = await http.post(url);
+    var response2 = await http.post(url2);
     if (response.statusCode == 200) {
       busStations = jsonDecode(response.body.toString())['results'];
       setState(() {
@@ -174,8 +200,22 @@ class _Transit1State extends State<Transit1> {
       bS= 'No nearby Bus Stations';
       print('Failed to get nearest bus station: ${response.statusCode}');
     }
+    if (response2.statusCode == 200) {
+      busStations1 = jsonDecode(response2.body.toString())['results'];
+      setState(() {
+        bS1 = busStations1[0] ['name'];
+        //print(bS1);
+      });
+    } else {
+      bS1= 'No nearby Train Stations to destination';
+      print('Failed to get nearest train station: ${response2.statusCode}');
+    }
   }
+  var arrivalStops = <String>[];
+  var destinationStops = <String>[];
   void getTransitOptions() async {
+    arrivalStops.clear();
+    destinationStops.clear();
     var url = Uri.parse(
         'https://maps.googleapis.com/maps/api/directions/json?origin=$sourcelat,$sourcelong&destination=$destinationlat,$destinationlong&mode=transit&key=$apiKey1');
     var response = await http.get(url);
@@ -184,29 +224,50 @@ class _Transit1State extends State<Transit1> {
       var routes = data['routes'];
       if (routes.isNotEmpty) {
         var legs = routes[0]['legs'];
-        var transitSteps = legs[0]['steps'];
-        var transitDescription = '';
-        transitSteps.forEach((step) {
+
+        legs[0]['steps'].forEach((step) {
           if (step['travel_mode'] == 'TRANSIT') {
             var transitDetails = step['transit_details'];
             var transitMode = transitDetails?['line']?['vehicle']?['type'];
             if (transitMode == 'BUS' || transitMode == 'RAIL') {
-              var line = transitDetails?['line'];
               var departureStop = transitDetails?['departure_stop'];
               var arrivalStop = transitDetails?['arrival_stop'];
-              if (line != null && departureStop != null && arrivalStop != null) {
-                transitDescription += line['name'] ?? '';
-                transitDescription += departureStop['name'] ?? '';
-                transitDescription += ' to ';
-                transitDescription += arrivalStop['name'] ?? '';
-                transitDescription += '\n';
+              if (departureStop != null && arrivalStop != null) {
+                arrivalStops.add(arrivalStop['name'] ?? '');
+                destinationStops.add(departureStop['name'] ?? '');
               }
             }
           }
         });
+
+        // Print the contents of the lists
+
+        print('Destination Stops: $destinationStops');
+        print('Arrival Stops: $arrivalStops');
+        for (int i = 0; i < destinationStops.length && i < arrivalStops.length; i++) {
+          // Concatenate elements from both lists as pairs
+          pair = '${destinationStops[i]} >>>>> ${arrivalStops[i]}';
+          pairs.add(pair); // Add the pair to the list
+          if (arrivalStops[i] == laststop) {
+            break; // Exit the loop if the condition is met
+          }
+        }
+        firststop=destinationStops[0]!;
+        laststop=arrivalStops.last!;
+        print(laststop);
+        for (int i = 0; i < destinationStops.length && i < arrivalStops.length; i++) {
+          // Concatenate elements from both lists as pairs
+            pair = '${destinationStops[i]} >>>>> ${arrivalStops[i]}';
+            pairs.add(pair); // Add the pair to the list
+
+        }
+        joinedPairs = pairs.join(' then ');
+
+
         setState(() {
-          transitOptionsDescription =
-          transitDescription.isNotEmpty ? transitDescription : 'No bus or train transit options found';
+          transitOptionsDescription = arrivalStops.isNotEmpty && destinationStops.isNotEmpty
+              ? 'Arrival Stops: $arrivalStops\nDestination Stops: $destinationStops'
+              : 'No bus or train transit options found';
         });
       } else {
         setState(() {
@@ -219,5 +280,6 @@ class _Transit1State extends State<Transit1> {
       });
     }
   }
+
 
 }
